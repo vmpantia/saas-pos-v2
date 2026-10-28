@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Pos.Api.Extensions;
 using Pos.Domain.Contracts.Services;
 
 namespace Pos.Api.Controllers;
@@ -10,14 +11,14 @@ public sealed class CategoriesController(ICategoryService categoryService) : Con
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
     {
-        var categories = await categoryService.GetAllAsync();
-        return Ok(categories);
+        var result = await categoryService.GetAllAsync();
+        return result.ToActionResult();
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetByIdAsync(Guid id)
     {
-        var category = await categoryService.GetByIdAsync(id);
-        return Ok(category);
+        var result = await categoryService.GetByIdAsync(id);
+        return result.ToActionResult();
     }
 }

@@ -1,6 +1,4 @@
-using System.Net;
 using Microsoft.AspNetCore.Mvc;
-using Pos.Application.Exceptions;
 
 namespace Pos.Api.Middlewares;
 
@@ -14,14 +12,13 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
         }
         catch (Exception ex)
         {
-            var (status, title) = ex switch
+            logger.LogError(ex, "Unhandled exception");
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
             {
-                NotFoundException => (HttpStatusCode.NotFound, ex.Message),
-                _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.")
-            };
-            if (status == HttpStatusCode.InternalServerError) logger.LogError(ex, "Unhandled exception");
-            context.Response.StatusCode = (int)status;
-            await context.Response.WriteAsJsonAsync(new ProblemDetails { Status = (int)status, Title = title, Detail = ex.Message });
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "An unexpected error occurred."
+            });
         }
     }
 }

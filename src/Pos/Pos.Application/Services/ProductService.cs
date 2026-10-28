@@ -1,14 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using Pos.Application.Exceptions;
 using Pos.Domain.Contracts.Repositories;
 using Pos.Domain.Contracts.Services;
 using Pos.Domain.Dtos.Products;
+using Pos.Domain.Results;
+using Pos.Domain.Results.Errors;
 
 namespace Pos.Application.Services;
 
 public sealed class ProductService(IProductRepository productRepository) : IProductService
 {
-    public async Task<IEnumerable<ProductDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<ProductDto>>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var products = await productRepository
             .GetAll()
@@ -18,10 +19,10 @@ public sealed class ProductService(IProductRepository productRepository) : IProd
         return products;
     }
 
-    public async Task<ProductDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result<ProductDto>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var product = await productRepository.GetByIdAsync(id, cancellationToken);
-        if (product is null) throw new NotFoundException($"Product with the specified ID '{id}' was not found.");
+        if (product is null) return ProductErrors.NotFound(id);
 
         return product.Map();
     }
