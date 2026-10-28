@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Pos.Domain.Contracts;
 using Pos.Domain.Contracts.Repositories;
 using Pos.Domain.Contracts.Services;
 using Pos.Infrastructure.DataAccess.Contexts;

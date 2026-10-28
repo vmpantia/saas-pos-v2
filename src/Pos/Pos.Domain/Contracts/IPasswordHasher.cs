@@ -1,6 +1,6 @@
 using Pos.Domain.Entities;
 
-namespace Pos.Domain.Contracts.Services;
+namespace Pos.Domain.Contracts;
 
 public interface IPasswordHasher
 {

@@ -2,11 +2,30 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Pos.Domain.Contracts.Entities;
 using Pos.Domain.Entities;
+using Pos.Infrastructure.DataAccess.Contexts;
 
 namespace Pos.Infrastructure.Extensions;
 
 internal static class ModelBuilderExtension
 {
+    internal static void ApplyTenantFilters(this ModelBuilder modelBuilder, PosDbContext context)
+    {
+        var method = typeof(ModelBuilderExtension).GetMethod(nameof(ApplyTenantFilter),
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        var types = modelBuilder.Model
+            .GetEntityTypes()
+            .Select(e => e.ClrType)
+            .Where(t => typeof(TenantEntity).IsAssignableFrom(t));
+
+        foreach (var type in types)
+            method.MakeGenericMethod(type).Invoke(null, [modelBuilder, context]);
+    }
+
+    private static void ApplyTenantFilter<TEntity>(ModelBuilder modelBuilder, PosDbContext context) where TEntity : TenantEntity
+    {
+        modelBuilder.Entity<TEntity>().HasQueryFilter(e => e.TenantId == context.CurrentTenantId);
+    }
+
     internal static void ConfigureEntityIds(this ModelBuilder modelBuilder)
     {
         var types = modelBuilder.Model

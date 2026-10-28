@@ -6,12 +6,10 @@ using Pos.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddApplication();
-builder.Services.AddJwtAuthentication(builder.Configuration);
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
+builder.Services
+    .AddInfrastructure(builder.Configuration)
+    .AddApplication()
+    .AddApi(builder.Configuration);
 
 var app = builder.Build();
 

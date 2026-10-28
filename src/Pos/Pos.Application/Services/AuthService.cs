@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Pos.Domain.Contracts;
 using Pos.Domain.Contracts.Repositories;
 using Pos.Domain.Contracts.Services;
 using Pos.Domain.Dtos.Auth;
@@ -17,8 +19,11 @@ public sealed class AuthService(
         var tenant = await tenantRepository.GetOneByExpressionAsync(t => t.Code == request.TenantCode, cancellationToken);
         if (tenant is null) return AuthErrors.InvalidCredentials();
 
-        var user = await userRepository.GetOneByExpressionAsync(
-            u => u.TenantId == tenant.Id && u.Username == request.Username, cancellationToken);
+        // Login happens before a tenant is known, so the tenant filter is bypassed here.
+        var user = await userRepository
+            .GetAll()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.TenantId == tenant.Id && u.Username == request.Username, cancellationToken);
         if (user is null || !passwordHasher.Verify(user, request.Password)) return AuthErrors.InvalidCredentials();
 
         return tokenService.GenerateToken(user);

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using Pos.Domain.Contracts.Services;
+using Pos.Domain.Contracts;
 using Pos.Domain.Entities;
 
 namespace Pos.Infrastructure.Security;

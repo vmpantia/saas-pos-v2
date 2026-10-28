@@ -11,7 +11,6 @@ namespace Pos.Infrastructure.Security;
 public sealed class JwtTokenService(IOptions<JwtSettings> options) : ITokenService
 {
     private readonly JwtSettings _settings = options.Value;
-    private const string TenantId = "tenant_id";
 
     public LoginResponseDto GenerateToken(User user)
     {
@@ -32,7 +31,7 @@ public sealed class JwtTokenService(IOptions<JwtSettings> options) : ITokenServi
                 [JwtRegisteredClaimNames.UniqueName] = user.Username,
                 [JwtRegisteredClaimNames.Email] = user.Email,
                 [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
-                [TenantId] = user.TenantId.ToString()
+                [AuthClaims.TenantId] = user.TenantId.ToString()
             }
         };
 
