@@ -5,6 +5,10 @@
 publish/
 artifacts/
 
+# Pos.Web (Tailwind)
+node_modules/
+src/Pos/Pos.Web/wwwroot/app.css
+
 # JetBrains Rider / IntelliJ
 .idea/
 *.iml

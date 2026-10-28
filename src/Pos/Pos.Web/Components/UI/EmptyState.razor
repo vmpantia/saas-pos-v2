@@ -1,0 +1,15 @@
+@inherits UiComponent
+
+<div class="@Cn("flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed bg-card p-10 text-center", Class)" @attributes="AdditionalAttributes">
+    <p class="text-sm font-medium">@Title</p>
+    @if (!string.IsNullOrEmpty(Description))
+    {
+        <p class="text-sm text-muted-foreground">@Description</p>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Description { get; set; }
+}

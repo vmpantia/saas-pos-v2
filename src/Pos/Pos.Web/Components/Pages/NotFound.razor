@@ -1,0 +1,16 @@
+@page "/not-found"
+@layout MainLayout
+
+<PageTitle>Not found - POS</PageTitle>
+
+<div class="mx-auto max-w-md py-16">
+    <EmptyState Title="Page not found" Description="Sorry, the page you are looking for does not exist.">
+        <Button Class="mt-4" OnClick="GoHome">Back to products</Button>
+    </EmptyState>
+</div>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = null!;
+
+    private void GoHome() => Navigation.NavigateTo("products");
+}

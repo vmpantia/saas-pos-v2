@@ -1,0 +1,7 @@
+@inherits UiComponent
+
+<td class="@Cn("whitespace-nowrap px-4 py-3.5 align-middle", AlignClass(Align), Class)" @attributes="AdditionalAttributes">@ChildContent</td>
+
+@code {
+    [Parameter] public TextAlign Align { get; set; } = TextAlign.Left;
+}

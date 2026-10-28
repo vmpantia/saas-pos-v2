@@ -1,0 +1,42 @@
+@using System.Linq.Expressions
+@inherits UiComponent
+
+@* Inside an EditForm (with a ValueExpression) this renders an InputText so validation works. *@
+@if (EditContext is not null && ValueExpression is not null)
+{
+    <InputText Value="@Value" ValueChanged="ValueChanged" ValueExpression="ValueExpression"
+               type="@Type" placeholder="@Placeholder" disabled="@Disabled" class="@Classes" @attributes="AdditionalAttributes" />
+}
+else if (Immediate)
+{
+    <input type="@Type" value="@Value" placeholder="@Placeholder" disabled="@Disabled" class="@Classes"
+           @oninput="OnChangedAsync" @attributes="AdditionalAttributes" />
+}
+else
+{
+    <input type="@Type" value="@Value" placeholder="@Placeholder" disabled="@Disabled" class="@Classes"
+           @onchange="OnChangedAsync" @attributes="AdditionalAttributes" />
+}
+
+@code {
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public Expression<Func<string?>>? ValueExpression { get; set; }
+    [Parameter] public string Type { get; set; } = "text";
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Update the bound value on every keystroke (e.g. search boxes).</summary>
+    [Parameter] public bool Immediate { get; set; }
+
+    private Task OnChangedAsync(ChangeEventArgs e) => ValueChanged.InvokeAsync(e.Value?.ToString());
+
+    private string Classes => Cn(
+        "flex h-10 w-full min-w-0 rounded-lg border border-input bg-card/80 px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none " +
+        "placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm " +
+        "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 " +
+        "[&.invalid]:border-destructive [&.invalid]:ring-destructive/20",
+        Class);
+}

@@ -1,0 +1,10 @@
+<div class="relative w-full">
+    <Icon Name="search" Class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+    <Input Value="@Value" ValueChanged="ValueChanged" Immediate="true" Type="search" Placeholder="@Placeholder" Class="pl-9" />
+</div>
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+}

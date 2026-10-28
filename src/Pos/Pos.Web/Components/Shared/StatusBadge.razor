@@ -1,0 +1,5 @@
+<Badge Variant="IsActive ? BadgeVariant.Success : BadgeVariant.Secondary">@(IsActive ? "Active" : "Inactive")</Badge>
+
+@code {
+    [Parameter] public bool IsActive { get; set; }
+}

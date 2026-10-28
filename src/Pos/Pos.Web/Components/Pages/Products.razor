@@ -1,0 +1,109 @@
+@page "/"
+@page "/products"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject SessionService Session
+
+<PageTitle>Products - POS</PageTitle>
+
+<div class="mx-auto max-w-6xl space-y-6">
+    <PageHeader Title="Products" Description="@Subtitle">
+        <Actions>
+            <div class="w-full sm:w-72">
+                <SearchInput @bind-Value="_search" Placeholder="Search name, SKU or category" />
+            </div>
+            <Button Variant="ButtonVariant.Outline" Loading="_loading" OnClick="LoadAsync"><Icon Name="refresh" /> Refresh</Button>
+        </Actions>
+    </PageHeader>
+
+    @if (!_loading && _error is null)
+    {
+        <div class="grid gap-4 sm:grid-cols-3">
+            <StatCard Title="Total products" Value="@_products.Count.ToString()" IconName="package" />
+            <StatCard Title="Active" Value="@_products.Count(p => p.IsActive).ToString()" IconName="check" />
+            <StatCard Title="Uncategorized" Value="@_products.Count(p => p.Category is null).ToString()" IconName="alert" />
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <TableSkeleton />
+    }
+    else if (_error is not null)
+    {
+        <ErrorAlert Error="_error" OnRetry="LoadAsync" />
+    }
+    else if (Filtered.Count == 0)
+    {
+        <EmptyState Title="@(string.IsNullOrWhiteSpace(_search) ? "No products found" : "No matching products")"
+                    Description="@(string.IsNullOrWhiteSpace(_search) ? "Products you add will appear here." : "Try a different search term.")" />
+    }
+    else
+    {
+        <Table>
+            <TableHeader>
+                <TableRow Class="hover:bg-transparent">
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead Align="TextAlign.Right">Price</TableHead>
+                    <TableHead Align="TextAlign.Right">Cost</TableHead>
+                    <TableHead Align="TextAlign.Right">Reorder level</TableHead>
+                    <TableHead>Status</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                @foreach (var product in Filtered)
+                {
+                    <TableRow @key="product.Id">
+                        <TableCell Class="font-mono text-xs text-muted-foreground">@product.Sku</TableCell>
+                        <TableCell Class="font-medium">@product.Name</TableCell>
+                        <TableCell Class="text-muted-foreground">@(product.Category?.Name ?? "-")</TableCell>
+                        <TableCell Align="TextAlign.Right" Class="tabular-nums">@product.Price.ToString("N2")</TableCell>
+                        <TableCell Align="TextAlign.Right" Class="tabular-nums text-muted-foreground">@product.Cost.ToString("N2")</TableCell>
+                        <TableCell Align="TextAlign.Right" Class="tabular-nums text-muted-foreground">@product.ReorderLevel</TableCell>
+                        <TableCell><StatusBadge IsActive="product.IsActive" /></TableCell>
+                    </TableRow>
+                }
+            </TableBody>
+        </Table>
+    }
+</div>
+
+@code {
+    private List<Product> _products = [];
+    private ApiError? _error;
+    private bool _loading = true;
+    private string? _search = string.Empty;
+
+    private List<Product> Filtered => string.IsNullOrWhiteSpace(_search)
+        ? _products
+        : _products.Where(p =>
+            p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+            p.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+            (p.Category?.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+
+    private string Subtitle => _loading || _error is not null
+        ? "Browse your product catalog."
+        : $"{Filtered.Count} of {_products.Count} products";
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        var result = await Api.GetProductsAsync();
+        if (result.IsSuccess)
+        {
+            _products = result.Value!;
+        }
+        else if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+}

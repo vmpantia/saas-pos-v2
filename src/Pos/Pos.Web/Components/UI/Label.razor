@@ -1,0 +1,7 @@
+@inherits UiComponent
+
+<label for="@For" class="@Cn("flex select-none items-center gap-2 text-sm font-medium leading-none", Class)" @attributes="AdditionalAttributes">@ChildContent</label>
+
+@code {
+    [Parameter] public string? For { get; set; }
+}

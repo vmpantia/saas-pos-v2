@@ -1,0 +1,24 @@
+@typeparam TValue
+@using System.Linq.Expressions
+@inherits UiComponent
+
+<div class="@Cn("grid gap-2", Class)" @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <Label For="@For">@Label</Label>
+    }
+    @ChildContent
+    @if (ValidationFor is not null)
+    {
+        <ValidationMessage For="ValidationFor" class="text-sm text-destructive" />
+    }
+</div>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>The id of the input the label points to.</summary>
+    [Parameter] public string? For { get; set; }
+
+    [Parameter] public Expression<Func<TValue>>? ValidationFor { get; set; }
+}

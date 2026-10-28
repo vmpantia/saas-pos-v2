@@ -1,0 +1,80 @@
+@page "/login"
+@layout AuthLayout
+@attribute [AllowAnonymous]
+@inject ApiClient Api
+@inject JwtAuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Sign in - POS</PageTitle>
+
+<Card>
+    <CardHeader>
+        <CardTitle>Sign in to POS</CardTitle>
+        <CardDescription>Enter your tenant code and credentials to continue.</CardDescription>
+    </CardHeader>
+    <CardContent>
+        <EditForm Model="_model" OnValidSubmit="SubmitAsync" FormName="login" class="grid gap-4">
+            <DataAnnotationsValidator />
+
+            @if (_error is not null)
+            {
+                <ErrorAlert Error="_error" />
+            }
+
+            <FormField Label="Tenant code" For="tenantCode" ValidationFor="() => _model.TenantCode">
+                <Input id="tenantCode" @bind-Value="_model.TenantCode" autocomplete="organization" />
+            </FormField>
+
+            <FormField Label="Username" For="username" ValidationFor="() => _model.Username">
+                <Input id="username" @bind-Value="_model.Username" autocomplete="username" />
+            </FormField>
+
+            <FormField Label="Password" For="password" ValidationFor="() => _model.Password">
+                <Input id="password" Type="password" @bind-Value="_model.Password" autocomplete="current-password" />
+            </FormField>
+
+            <Button Type="submit" Class="w-full" Loading="_busy">@(_busy ? "Signing in..." : "Sign in")</Button>
+        </EditForm>
+    </CardContent>
+</Card>
+
+@code {
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+
+    private readonly LoginRequest _model = new();
+    private ApiError? _error;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await AuthProvider.GetAccessTokenAsync() is not null)
+            Navigation.NavigateTo(SafeReturnUrl(), replace: true);
+    }
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        _error = null;
+
+        var result = await Api.LoginAsync(_model);
+        if (result.IsSuccess)
+        {
+            await AuthProvider.SignInAsync(result.Value!);
+            Navigation.NavigateTo(SafeReturnUrl(), replace: true);
+            return;
+        }
+
+        _error = result.Error;
+        _model.Password = string.Empty;
+        _busy = false;
+    }
+
+    // Only allow in-app relative paths to avoid open redirects.
+    private string SafeReturnUrl()
+    {
+        if (string.IsNullOrWhiteSpace(ReturnUrl)) return "products";
+
+        var url = ReturnUrl.TrimStart('/');
+        return url.Contains("://") || url.StartsWith('\\') || ReturnUrl.StartsWith("//") ? "products" : url;
+    }
+}

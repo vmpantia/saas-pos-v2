@@ -1,0 +1,14 @@
+@inherits UiComponent
+
+<div role="alert" class="@Classes" @attributes="AdditionalAttributes">@ChildContent</div>
+
+@code {
+    [Parameter] public AlertVariant Variant { get; set; } = AlertVariant.Default;
+
+    private string Classes => Cn(
+        "relative grid w-full gap-1 rounded-lg border px-4 py-3 text-sm",
+        Variant == AlertVariant.Destructive
+            ? "border-destructive/50 bg-destructive/5 text-destructive"
+            : "bg-card text-card-foreground",
+        Class);
+}

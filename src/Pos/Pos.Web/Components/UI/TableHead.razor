@@ -1,0 +1,7 @@
+@inherits UiComponent
+
+<th class="@Cn("h-11 whitespace-nowrap bg-muted/50 px-4 align-middle text-xs font-semibold uppercase tracking-wider text-muted-foreground", AlignClass(Align), Class)" @attributes="AdditionalAttributes">@ChildContent</th>
+
+@code {
+    [Parameter] public TextAlign Align { get; set; } = TextAlign.Left;
+}

@@ -1,0 +1,101 @@
+@page "/categories"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject SessionService Session
+
+<PageTitle>Categories - POS</PageTitle>
+
+<div class="mx-auto max-w-6xl space-y-6">
+    <PageHeader Title="Categories" Description="@Subtitle">
+        <Actions>
+            <div class="w-full sm:w-72">
+                <SearchInput @bind-Value="_search" Placeholder="Search name or description" />
+            </div>
+            <Button Variant="ButtonVariant.Outline" Loading="_loading" OnClick="LoadAsync"><Icon Name="refresh" /> Refresh</Button>
+        </Actions>
+    </PageHeader>
+
+    @if (!_loading && _error is null)
+    {
+        <div class="grid gap-4 sm:grid-cols-3">
+            <StatCard Title="Total categories" Value="@_categories.Count.ToString()" IconName="tag" />
+            <StatCard Title="Active" Value="@_categories.Count(c => c.IsActive).ToString()" IconName="check" />
+            <StatCard Title="Inactive" Value="@_categories.Count(c => !c.IsActive).ToString()" IconName="alert" />
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <TableSkeleton />
+    }
+    else if (_error is not null)
+    {
+        <ErrorAlert Error="_error" OnRetry="LoadAsync" />
+    }
+    else if (Filtered.Count == 0)
+    {
+        <EmptyState Title="@(string.IsNullOrWhiteSpace(_search) ? "No categories found" : "No matching categories")"
+                    Description="@(string.IsNullOrWhiteSpace(_search) ? "Categories you add will appear here." : "Try a different search term.")" />
+    }
+    else
+    {
+        <Table>
+            <TableHeader>
+                <TableRow Class="hover:bg-transparent">
+                    <TableHead>Name</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                @foreach (var category in Filtered)
+                {
+                    <TableRow @key="category.Id">
+                        <TableCell Class="font-medium">@category.Name</TableCell>
+                        <TableCell Class="text-muted-foreground">@(string.IsNullOrWhiteSpace(category.Description) ? "-" : category.Description)</TableCell>
+                        <TableCell><StatusBadge IsActive="category.IsActive" /></TableCell>
+                        <TableCell Class="text-muted-foreground">@category.CreatedAtUtc.ToString("yyyy-MM-dd")</TableCell>
+                    </TableRow>
+                }
+            </TableBody>
+        </Table>
+    }
+</div>
+
+@code {
+    private List<Category> _categories = [];
+    private ApiError? _error;
+    private bool _loading = true;
+    private string? _search = string.Empty;
+
+    private List<Category> Filtered => string.IsNullOrWhiteSpace(_search)
+        ? _categories
+        : _categories.Where(c =>
+            c.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+            (c.Description?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+
+    private string Subtitle => _loading || _error is not null
+        ? "Organize your products into categories."
+        : $"{Filtered.Count} of {_categories.Count} categories";
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        var result = await Api.GetCategoriesAsync();
+        if (result.IsSuccess)
+        {
+            _categories = result.Value!;
+        }
+        else if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+}

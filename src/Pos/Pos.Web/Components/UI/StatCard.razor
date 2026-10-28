@@ -1,0 +1,19 @@
+@inherits UiComponent
+
+<Card Class="@Cn("animate-fade-in gap-3 py-5", Class)">
+    <CardContent Class="flex items-center justify-between gap-4">
+        <div class="grid gap-1">
+            <p class="text-sm font-medium text-muted-foreground">@Title</p>
+            <p class="text-2xl font-semibold tracking-tight tabular-nums">@Value</p>
+        </div>
+        <div class="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Icon Name="@IconName" Class="size-5" />
+        </div>
+    </CardContent>
+</Card>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string IconName { get; set; } = string.Empty;
+}

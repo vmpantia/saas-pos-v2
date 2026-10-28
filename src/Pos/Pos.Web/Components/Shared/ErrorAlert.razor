@@ -1,0 +1,22 @@
+@if (Error is not null)
+{
+    <Alert Variant="AlertVariant.Destructive">
+        <AlertTitle>@Error.Title</AlertTitle>
+        <AlertDescription>
+            <p>@Error.Message</p>
+            @if (!string.IsNullOrEmpty(Error.Code))
+            {
+                <p class="mt-1 text-xs opacity-80">Error code: <span class="font-mono">@Error.Code</span></p>
+            }
+            @if (OnRetry.HasDelegate)
+            {
+                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Class="mt-3" OnClick="OnRetry">Try again</Button>
+            }
+        </AlertDescription>
+    </Alert>
+}
+
+@code {
+    [Parameter] public ApiError? Error { get; set; }
+    [Parameter] public EventCallback OnRetry { get; set; }
+}
