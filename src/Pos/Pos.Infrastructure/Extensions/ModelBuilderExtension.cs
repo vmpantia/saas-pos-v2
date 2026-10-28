@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Pos.Domain.Contracts.Entities;
 using Pos.Domain.Entities;
 
 namespace Pos.Infrastructure.Extensions;
@@ -37,6 +38,18 @@ internal static class ModelBuilderExtension
             .WithMany(c => c.Products)
             .HasForeignKey(p => p.CategoryId)
             .IsRequired(false);
+    }
+
+    internal static void ConfigureEntity(this EntityTypeBuilder<User> entity)
+    {
+        entity.Property(u => u.Username).HasMaxLength(100);
+        entity.Property(u => u.Email).HasMaxLength(256);
+        entity.Property(u => u.PasswordHash).HasMaxLength(512);
+        entity.Property(u => u.FirstName).HasMaxLength(100);
+        entity.Property(u => u.MiddleName).HasMaxLength(100);
+        entity.Property(u => u.LastName).HasMaxLength(100);
+        entity.HasIndex(u => new { u.TenantId, u.Username }).IsUnique();
+        entity.HasIndex(u => new { u.TenantId, u.Email }).IsUnique();
     }
 
     internal static void ConfigureEntity(this EntityTypeBuilder<Category> entity)

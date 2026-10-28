@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Pos.Domain.Contracts.Entities;
 using Pos.Domain.Contracts.Repositories;
 using Pos.Domain.Entities;
 using Pos.Infrastructure.DataAccess.Contexts;

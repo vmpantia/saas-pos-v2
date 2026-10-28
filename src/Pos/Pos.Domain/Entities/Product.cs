@@ -1,4 +1,5 @@
 using Pos.Domain.Contracts;
+using Pos.Domain.Contracts.Entities;
 using Pos.Domain.Dtos.Categories;
 using Pos.Domain.Dtos.Products;
 
@@ -13,7 +14,6 @@ public sealed class Product : TenantEntity, IMappable<ProductDto>
     public decimal Price { get; set; }
     public decimal Cost { get; set; }
     public int ReorderLevel { get; set; }
-    public bool IsActive { get; set; } = true;
     
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public string CreatedBy { get; set; } = null!;

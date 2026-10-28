@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using Pos.Domain.Entities;
+using Pos.Domain.Contracts.Entities;
 
 namespace Pos.Domain.Contracts.Repositories;
 

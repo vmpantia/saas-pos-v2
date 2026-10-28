@@ -1,4 +1,4 @@
-namespace Pos.Domain.Entities;
+namespace Pos.Domain.Contracts.Entities;
 
 public abstract class TenantEntity : BaseEntity
 {
