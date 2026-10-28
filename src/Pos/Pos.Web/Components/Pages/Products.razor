@@ -13,6 +13,7 @@
                 <SearchInput @bind-Value="_search" Placeholder="Search name, SKU or category" />
             </div>
             <Button Variant="ButtonVariant.Outline" Loading="_loading" OnClick="LoadAsync"><Icon Name="refresh" /> Refresh</Button>
+            <Button OnClick="() => _creating = true"><Icon Name="plus" /> New product</Button>
         </Actions>
     </PageHeader>
 
@@ -50,6 +51,7 @@
                     <TableHead Align="TextAlign.Right">Cost</TableHead>
                     <TableHead Align="TextAlign.Right">Reorder level</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead Align="TextAlign.Right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -63,20 +65,46 @@
                         <TableCell Align="TextAlign.Right" Class="tabular-nums text-muted-foreground">@product.Cost.ToString("N2")</TableCell>
                         <TableCell Align="TextAlign.Right" Class="tabular-nums text-muted-foreground">@product.ReorderLevel</TableCell>
                         <TableCell><StatusBadge IsActive="product.IsActive" /></TableCell>
+                        <TableCell Align="TextAlign.Right">
+                            <div class="flex justify-end gap-1">
+                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="View" OnClick="() => _viewId = product.Id"><Icon Name="eye" /></Button>
+                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="Edit" OnClick="() => _editing = product"><Icon Name="pencil" /></Button>
+                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="@(product.IsActive ? "Deactivate" : "Activate")" OnClick="() => AskToggle(product)"><Icon Name="@(product.IsActive ? "ban" : "check")" /></Button>
+                            </div>
+                        </TableCell>
                     </TableRow>
                 }
             </TableBody>
         </Table>
     }
+    @if (_creating)
+    {
+        <ProductFormDialog OnSaved="OnSavedAsync" OnClose="CloseDialogs" />
+    }
+    else if (_editing is not null)
+    {
+        <ProductFormDialog Product="_editing" OnSaved="OnSavedAsync" OnClose="CloseDialogs" />
+    }
+    else if (_viewId is not null)
+    {
+        <ProductDetailsDialog ProductId="_viewId.Value" OnClose="CloseDialogs" />
+    }
+    else if (_toggling is not null)
+    {
+        <ConfirmDialog Title="@(_toggling.IsActive ? "Deactivate " : "Activate ")"
+                       Description="@(_toggling.IsActive ? $"'{_toggling.Name}' will be marked inactive." : $"'{_toggling.Name}' will be marked active again.")"
+                       ConfirmText="@(_toggling.IsActive ? "Deactivate" : "Activate")" Destructive="_toggling.IsActive"
+                       Busy="_busy" Error="_toggleError" OnConfirm="ConfirmToggleAsync" OnCancel="CloseDialogs" />
+    }
 </div>
 
 @code {
-    private List<Product> _products = [];
+    private List<ProductDto> _products = [];
     private ApiError? _error;
     private bool _loading = true;
     private string? _search = string.Empty;
 
-    private List<Product> Filtered => string.IsNullOrWhiteSpace(_search)
+    private List<ProductDto> Filtered => string.IsNullOrWhiteSpace(_search)
         ? _products
         : _products.Where(p =>
             p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
@@ -105,5 +133,52 @@
         }
 
         _loading = false;
+    }
+
+    private ProductDto? _editing;
+    private ProductDto? _toggling;
+    private Guid? _viewId;
+    private bool _creating;
+    private bool _busy;
+    private ApiError? _toggleError;
+
+    private void CloseDialogs()
+    {
+        _creating = false;
+        _editing = null;
+        _viewId = null;
+        _toggling = null;
+        _toggleError = null;
+    }
+
+    private Task OnSavedAsync(ProductDto _)
+    {
+        CloseDialogs();
+        return LoadAsync();
+    }
+
+    private void AskToggle(ProductDto item)
+    {
+        _toggleError = null;
+        _toggling = item;
+    }
+
+    private async Task ConfirmToggleAsync()
+    {
+        _busy = true;
+        _toggleError = null;
+
+        var result = await Api.SetProductActiveAsync(_toggling!.Id, !_toggling.IsActive);
+        _busy = false;
+
+        if (result.IsSuccess)
+        {
+            CloseDialogs();
+            await LoadAsync();
+        }
+        else if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _toggleError = result.Error;
+        }
     }
 }

@@ -1,3 +1,6 @@
+using Pos.Domain.Dtos.Auth;
+using Pos.Domain.Dtos.Categories;
+using Pos.Domain.Dtos.Products;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -12,7 +15,7 @@ public sealed class JwtAuthenticationStateProvider(ProtectedSessionStorage stora
     private const string StorageKey = "pos.auth";
     private static readonly AuthenticationState Anonymous = new(new ClaimsPrincipal(new ClaimsIdentity()));
 
-    private LoginResponse? _session;
+    private LoginResponseDto? _session;
     private bool _loaded;
 
     public async Task<string?> GetAccessTokenAsync()
@@ -27,7 +30,7 @@ public sealed class JwtAuthenticationStateProvider(ProtectedSessionStorage stora
         return IsValid(_session) ? new AuthenticationState(BuildPrincipal(_session!.AccessToken)) : Anonymous;
     }
 
-    public async Task SignInAsync(LoginResponse response)
+    public async Task SignInAsync(LoginResponseDto response)
     {
         _session = response;
         _loaded = true;
@@ -49,7 +52,7 @@ public sealed class JwtAuthenticationStateProvider(ProtectedSessionStorage stora
 
         try
         {
-            var result = await storage.GetAsync<LoginResponse>(StorageKey);
+            var result = await storage.GetAsync<LoginResponseDto>(StorageKey);
             _session = result.Success ? result.Value : null;
             _loaded = true;
         }
@@ -66,7 +69,7 @@ public sealed class JwtAuthenticationStateProvider(ProtectedSessionStorage stora
         }
     }
 
-    private static bool IsValid(LoginResponse? session) =>
+    private static bool IsValid(LoginResponseDto? session) =>
         session is { AccessToken.Length: > 0 } && session.ExpiresAtUtc > DateTime.UtcNow;
 
     private static ClaimsPrincipal BuildPrincipal(string token)

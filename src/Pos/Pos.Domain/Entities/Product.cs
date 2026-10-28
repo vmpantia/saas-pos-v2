@@ -26,6 +26,7 @@ public sealed class Product : TenantEntity, IMappable<ProductDto>
     {
         Id = Id,
         Sku = Sku,
+        Barcode = Barcode,
         Name = Name,
         Category = Category is null
             ? null

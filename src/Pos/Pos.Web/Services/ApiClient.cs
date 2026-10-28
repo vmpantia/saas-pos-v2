@@ -1,3 +1,6 @@
+using Pos.Domain.Dtos.Auth;
+using Pos.Domain.Dtos.Categories;
+using Pos.Domain.Dtos.Products;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -7,14 +10,38 @@ namespace Pos.Web.Services;
 
 public sealed class ApiClient(HttpClient http, JwtAuthenticationStateProvider authProvider)
 {
-    public Task<ApiResult<LoginResponse>> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default) =>
-        SendAsync<LoginResponse>(HttpMethod.Post, "api/auth/login", request, authenticated: false, cancellationToken);
+    public Task<ApiResult<LoginResponseDto>> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default) =>
+        SendAsync<LoginResponseDto>(HttpMethod.Post, "api/auth/login", request, authenticated: false, cancellationToken);
 
-    public Task<ApiResult<List<Product>>> GetProductsAsync(CancellationToken cancellationToken = default) =>
-        SendAsync<List<Product>>(HttpMethod.Get, "api/products", null, authenticated: true, cancellationToken);
+    public Task<ApiResult<List<ProductDto>>> GetProductsAsync(CancellationToken cancellationToken = default) =>
+        SendAsync<List<ProductDto>>(HttpMethod.Get, "api/products", null, authenticated: true, cancellationToken);
 
-    public Task<ApiResult<List<Category>>> GetCategoriesAsync(CancellationToken cancellationToken = default) =>
-        SendAsync<List<Category>>(HttpMethod.Get, "api/categories", null, authenticated: true, cancellationToken);
+    public Task<ApiResult<List<CategoryDto>>> GetCategoriesAsync(CancellationToken cancellationToken = default) =>
+        SendAsync<List<CategoryDto>>(HttpMethod.Get, "api/categories", null, authenticated: true, cancellationToken);
+
+    public Task<ApiResult<ProductDto>> GetProductAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync<ProductDto>(HttpMethod.Get, $"api/products/{id}", null, authenticated: true, cancellationToken);
+
+    public Task<ApiResult<ProductDto>> CreateProductAsync(ProductRequestDto form, CancellationToken cancellationToken = default) =>
+        SendAsync<ProductDto>(HttpMethod.Post, "api/products", form, authenticated: true, cancellationToken);
+
+    public Task<ApiResult<ProductDto>> UpdateProductAsync(Guid id, ProductRequestDto form, CancellationToken cancellationToken = default) =>
+        SendAsync<ProductDto>(HttpMethod.Put, $"api/products/{id}", form, authenticated: true, cancellationToken);
+
+    public Task<ApiResult<ProductDto>> SetProductActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken = default) =>
+        SendAsync<ProductDto>(HttpMethod.Patch, $"api/products/{id}/{(isActive ? "activate" : "deactivate")}", null, authenticated: true, cancellationToken);
+
+    public Task<ApiResult<CategoryDto>> GetCategoryAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync<CategoryDto>(HttpMethod.Get, $"api/categories/{id}", null, authenticated: true, cancellationToken);
+
+    public Task<ApiResult<CategoryDto>> CreateCategoryAsync(CategoryRequestDto form, CancellationToken cancellationToken = default) =>
+        SendAsync<CategoryDto>(HttpMethod.Post, "api/categories", form, authenticated: true, cancellationToken);
+
+    public Task<ApiResult<CategoryDto>> UpdateCategoryAsync(Guid id, CategoryRequestDto form, CancellationToken cancellationToken = default) =>
+        SendAsync<CategoryDto>(HttpMethod.Put, $"api/categories/{id}", form, authenticated: true, cancellationToken);
+
+    public Task<ApiResult<CategoryDto>> SetCategoryActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken = default) =>
+        SendAsync<CategoryDto>(HttpMethod.Patch, $"api/categories/{id}/{(isActive ? "activate" : "deactivate")}", null, authenticated: true, cancellationToken);
 
     private async Task<ApiResult<T>> SendAsync<T>(HttpMethod method, string url, object? body, bool authenticated, CancellationToken cancellationToken)
     {

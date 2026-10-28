@@ -1,0 +1,15 @@
+@typeparam TValue
+@using System.Linq.Expressions
+@inherits UiComponent
+
+<InputSelect TValue="TValue" Value="Value" ValueChanged="ValueChanged" ValueExpression="ValueExpression"
+             class="@Cn(FieldStyles.Control, Class)" disabled="@Disabled" @attributes="AdditionalAttributes">
+    @ChildContent
+</InputSelect>
+
+@code {
+    [Parameter] public TValue Value { get; set; } = default!;
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+    [Parameter] public Expression<Func<TValue>>? ValueExpression { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+}

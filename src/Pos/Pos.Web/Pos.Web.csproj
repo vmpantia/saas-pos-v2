@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Pos.Domain\Pos.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="package.json;package-lock.json;node_modules\**" />
     <None Include="package.json;Styles\**" />
   </ItemGroup>

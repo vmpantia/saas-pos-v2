@@ -12,6 +12,7 @@
                 <SearchInput @bind-Value="_search" Placeholder="Search name or description" />
             </div>
             <Button Variant="ButtonVariant.Outline" Loading="_loading" OnClick="LoadAsync"><Icon Name="refresh" /> Refresh</Button>
+            <Button OnClick="() => _creating = true"><Icon Name="plus" /> New category</Button>
         </Actions>
     </PageHeader>
 
@@ -46,6 +47,7 @@
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead Align="TextAlign.Right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -56,20 +58,46 @@
                         <TableCell Class="text-muted-foreground">@(string.IsNullOrWhiteSpace(category.Description) ? "-" : category.Description)</TableCell>
                         <TableCell><StatusBadge IsActive="category.IsActive" /></TableCell>
                         <TableCell Class="text-muted-foreground">@category.CreatedAtUtc.ToString("yyyy-MM-dd")</TableCell>
+                        <TableCell Align="TextAlign.Right">
+                            <div class="flex justify-end gap-1">
+                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="View" OnClick="() => _viewId = category.Id"><Icon Name="eye" /></Button>
+                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="Edit" OnClick="() => _editing = category"><Icon Name="pencil" /></Button>
+                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="@(category.IsActive ? "Deactivate" : "Activate")" OnClick="() => AskToggle(category)"><Icon Name="@(category.IsActive ? "ban" : "check")" /></Button>
+                            </div>
+                        </TableCell>
                     </TableRow>
                 }
             </TableBody>
         </Table>
     }
+    @if (_creating)
+    {
+        <CategoryFormDialog OnSaved="OnSavedAsync" OnClose="CloseDialogs" />
+    }
+    else if (_editing is not null)
+    {
+        <CategoryFormDialog Category="_editing" OnSaved="OnSavedAsync" OnClose="CloseDialogs" />
+    }
+    else if (_viewId is not null)
+    {
+        <CategoryDetailsDialog CategoryId="_viewId.Value" OnClose="CloseDialogs" />
+    }
+    else if (_toggling is not null)
+    {
+        <ConfirmDialog Title="@(_toggling.IsActive ? "Deactivate " : "Activate ")"
+                       Description="@(_toggling.IsActive ? $"'{_toggling.Name}' will be marked inactive." : $"'{_toggling.Name}' will be marked active again.")"
+                       ConfirmText="@(_toggling.IsActive ? "Deactivate" : "Activate")" Destructive="_toggling.IsActive"
+                       Busy="_busy" Error="_toggleError" OnConfirm="ConfirmToggleAsync" OnCancel="CloseDialogs" />
+    }
 </div>
 
 @code {
-    private List<Category> _categories = [];
+    private List<CategoryDto> _categories = [];
     private ApiError? _error;
     private bool _loading = true;
     private string? _search = string.Empty;
 
-    private List<Category> Filtered => string.IsNullOrWhiteSpace(_search)
+    private List<CategoryDto> Filtered => string.IsNullOrWhiteSpace(_search)
         ? _categories
         : _categories.Where(c =>
             c.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
@@ -97,5 +125,52 @@
         }
 
         _loading = false;
+    }
+
+    private CategoryDto? _editing;
+    private CategoryDto? _toggling;
+    private Guid? _viewId;
+    private bool _creating;
+    private bool _busy;
+    private ApiError? _toggleError;
+
+    private void CloseDialogs()
+    {
+        _creating = false;
+        _editing = null;
+        _viewId = null;
+        _toggling = null;
+        _toggleError = null;
+    }
+
+    private Task OnSavedAsync(CategoryDto _)
+    {
+        CloseDialogs();
+        return LoadAsync();
+    }
+
+    private void AskToggle(CategoryDto item)
+    {
+        _toggleError = null;
+        _toggling = item;
+    }
+
+    private async Task ConfirmToggleAsync()
+    {
+        _busy = true;
+        _toggleError = null;
+
+        var result = await Api.SetCategoryActiveAsync(_toggling!.Id, !_toggling.IsActive);
+        _busy = false;
+
+        if (result.IsSuccess)
+        {
+            CloseDialogs();
+            await LoadAsync();
+        }
+        else if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _toggleError = result.Error;
+        }
     }
 }

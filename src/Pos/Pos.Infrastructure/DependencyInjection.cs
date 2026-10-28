@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Pos.Domain.Contracts;
 using Pos.Domain.Contracts.Repositories;
 using Pos.Domain.Contracts.Services;
+using Pos.Infrastructure.DataAccess;
 using Pos.Infrastructure.DataAccess.Contexts;
 using Pos.Infrastructure.DataAccess.Repositories;
 using Pos.Infrastructure.Security;
@@ -42,6 +43,7 @@ public static class DependencyInjection
 
         private void AddRepositories()
         {
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();

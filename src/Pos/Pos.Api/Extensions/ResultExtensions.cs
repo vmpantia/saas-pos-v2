@@ -19,6 +19,12 @@ public static class ResultExtensions
         return ToProblem(result.Error);
     }
 
+    public static IActionResult ToCreatedResult<TValue>(this Result<TValue> result, Func<TValue, string> location)
+    {
+        if (result.IsSuccess) return new CreatedResult(location(result.Value), result.Value);
+        return ToProblem(result.Error);
+    }
+
     private static ObjectResult ToProblem(Error error)
     {
         var status = error.Type switch

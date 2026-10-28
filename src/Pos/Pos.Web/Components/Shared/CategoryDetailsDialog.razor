@@ -1,0 +1,55 @@
+@inject ApiClient Api
+@inject SessionService Session
+
+<Dialog Title="Category details" Description="@(_category?.Name)" OnClose="OnClose">
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="flex justify-center py-8"><Spinner /></div>
+        }
+        else if (_error is not null)
+        {
+            <ErrorAlert Error="_error" />
+        }
+        else if (_category is not null)
+        {
+            <dl class="divide-y">
+                <DetailRow Label="Name" Value="@_category.Name" />
+                <DetailRow Label="Description" Value="@_category.Description" />
+                <DetailRow Label="Status"><StatusBadge IsActive="_category.IsActive" /></DetailRow>
+                <DetailRow Label="Created" Value="@($"{_category.CreatedAtUtc:yyyy-MM-dd HH:mm} UTC by {_category.CreatedBy}")" />
+                @if (_category.ModifiedAtUtc is not null)
+                {
+                    <DetailRow Label="Modified" Value="@($"{_category.ModifiedAtUtc:yyyy-MM-dd HH:mm} UTC by {_category.ModifiedBy}")" />
+                }
+            </dl>
+        }
+    </ChildContent>
+    <Footer>
+        <Button Variant="ButtonVariant.Outline" OnClick="OnClose">Close</Button>
+    </Footer>
+</Dialog>
+
+@code {
+    [Parameter] public Guid CategoryId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private CategoryDto? _category;
+    private ApiError? _error;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Api.GetCategoryAsync(CategoryId);
+        if (result.IsSuccess)
+        {
+            _category = result.Value;
+        }
+        else if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+}

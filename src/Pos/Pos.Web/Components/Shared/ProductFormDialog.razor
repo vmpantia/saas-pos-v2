@@ -1,0 +1,107 @@
+@inject ApiClient Api
+@inject SessionService Session
+
+<Dialog Title="@(IsEdit ? "Edit product" : "New product")"
+        Description="@(IsEdit ? "Update the product details." : "Add a product to your catalog.")"
+        Size="max-w-2xl" OnClose="OnClose">
+    <ChildContent>
+        <EditForm id="product-form" Model="_form" OnValidSubmit="SaveAsync" class="grid gap-4">
+            <DataAnnotationsValidator />
+            @if (_error is not null)
+            {
+                <ErrorAlert Error="_error" />
+            }
+            <div class="grid gap-4 sm:grid-cols-2">
+                <FormField TValue="string" Label="SKU" For="prod-sku" ValidationFor="() => _form.Sku">
+                    <Input id="prod-sku" @bind-Value="_form.Sku" />
+                </FormField>
+                <FormField TValue="string?" Label="Barcode" For="prod-barcode" ValidationFor="() => _form.Barcode">
+                    <Input id="prod-barcode" @bind-Value="_form.Barcode" Placeholder="Optional" />
+                </FormField>
+            </div>
+            <FormField TValue="string" Label="Name" For="prod-name" ValidationFor="() => _form.Name">
+                <Input id="prod-name" @bind-Value="_form.Name" />
+            </FormField>
+            <FormField TValue="Guid?" Label="Category" For="prod-category" ValidationFor="() => _form.CategoryId">
+                <Select id="prod-category" TValue="Guid?" @bind-Value="_form.CategoryId" Disabled="_loadingCategories">
+                    <option value="">No category</option>
+                    @foreach (var category in _categories)
+                    {
+                        <option value="@category.Id">@category.Name@(category.IsActive ? "" : " (inactive)")</option>
+                    }
+                </Select>
+            </FormField>
+            <div class="grid gap-4 sm:grid-cols-3">
+                <FormField TValue="decimal" Label="Price" For="prod-price" ValidationFor="() => _form.Price">
+                    <NumberInput id="prod-price" TValue="decimal" @bind-Value="_form.Price" step="0.01" />
+                </FormField>
+                <FormField TValue="decimal" Label="Cost" For="prod-cost" ValidationFor="() => _form.Cost">
+                    <NumberInput id="prod-cost" TValue="decimal" @bind-Value="_form.Cost" step="0.01" />
+                </FormField>
+                <FormField TValue="int" Label="Reorder level" For="prod-reorder" ValidationFor="() => _form.ReorderLevel">
+                    <NumberInput id="prod-reorder" TValue="int" @bind-Value="_form.ReorderLevel" />
+                </FormField>
+            </div>
+        </EditForm>
+    </ChildContent>
+    <Footer>
+        <Button Variant="ButtonVariant.Outline" Disabled="_saving" OnClick="OnClose">Cancel</Button>
+        <Button Type="submit" form="product-form" Loading="_saving">@(IsEdit ? "Save changes" : "Create product")</Button>
+    </Footer>
+</Dialog>
+
+@code {
+    [Parameter] public ProductDto? Product { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnSaved { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private ProductRequestDto _form = new();
+    private List<CategoryDto> _categories = [];
+    private ApiError? _error;
+    private bool _saving;
+    private bool _loadingCategories = true;
+
+    private bool IsEdit => Product is not null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _form = Product.ToRequest();
+
+        var result = await Api.GetCategoriesAsync();
+        if (result.IsSuccess)
+        {
+            // Only active categories are selectable, but keep the current one so editing doesn't drop it.
+            var currentId = Product?.Category?.Id;
+            _categories = result.Value!.Where(c => c.IsActive || c.Id == currentId).OrderBy(c => c.Name).ToList();
+        }
+        else if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _error = result.Error;
+        }
+
+        _loadingCategories = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _error = null;
+
+        var result = IsEdit
+            ? await Api.UpdateProductAsync(Product!.Id, _form)
+            : await Api.CreateProductAsync(_form);
+
+        if (result.IsSuccess)
+        {
+            await OnSaved.InvokeAsync(result.Value!);
+            return;
+        }
+
+        if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _error = result.Error;
+        }
+
+        _saving = false;
+    }
+}

@@ -1,0 +1,63 @@
+@inject ApiClient Api
+@inject SessionService Session
+
+<Dialog Title="@(IsEdit ? "Edit category" : "New category")"
+        Description="@(IsEdit ? "Update the category details." : "Add a category to organize your products.")"
+        OnClose="OnClose">
+    <ChildContent>
+        <EditForm id="category-form" Model="_form" OnValidSubmit="SaveAsync" class="grid gap-4">
+            <DataAnnotationsValidator />
+            @if (_error is not null)
+            {
+                <ErrorAlert Error="_error" />
+            }
+            <FormField TValue="string" Label="Name" For="cat-name" ValidationFor="() => _form.Name">
+                <Input id="cat-name" @bind-Value="_form.Name" Placeholder="e.g. Beverages" />
+            </FormField>
+            <FormField TValue="string?" Label="Description" For="cat-desc" ValidationFor="() => _form.Description">
+                <Input id="cat-desc" @bind-Value="_form.Description" Placeholder="Optional" />
+            </FormField>
+        </EditForm>
+    </ChildContent>
+    <Footer>
+        <Button Variant="ButtonVariant.Outline" Disabled="_saving" OnClick="OnClose">Cancel</Button>
+        <Button Type="submit" form="category-form" Loading="_saving">@(IsEdit ? "Save changes" : "Create category")</Button>
+    </Footer>
+</Dialog>
+
+@code {
+    [Parameter] public CategoryDto? Category { get; set; }
+    [Parameter] public EventCallback<CategoryDto> OnSaved { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private CategoryRequestDto _form = new();
+    private ApiError? _error;
+    private bool _saving;
+
+    private bool IsEdit => Category is not null;
+
+    protected override void OnInitialized() => _form = Category.ToRequest();
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _error = null;
+
+        var result = IsEdit
+            ? await Api.UpdateCategoryAsync(Category!.Id, _form)
+            : await Api.CreateCategoryAsync(_form);
+
+        if (result.IsSuccess)
+        {
+            await OnSaved.InvokeAsync(result.Value!);
+            return;
+        }
+
+        if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _error = result.Error;
+        }
+
+        _saving = false;
+    }
+}

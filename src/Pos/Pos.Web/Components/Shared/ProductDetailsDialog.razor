@@ -1,0 +1,60 @@
+@inject ApiClient Api
+@inject SessionService Session
+
+<Dialog Title="Product details" Description="@(_product?.Name)" OnClose="OnClose">
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="flex justify-center py-8"><Spinner /></div>
+        }
+        else if (_error is not null)
+        {
+            <ErrorAlert Error="_error" />
+        }
+        else if (_product is not null)
+        {
+            <dl class="divide-y">
+                <DetailRow Label="SKU" Value="@_product.Sku" />
+                <DetailRow Label="Barcode" Value="@_product.Barcode" />
+                <DetailRow Label="Name" Value="@_product.Name" />
+                <DetailRow Label="Category" Value="@_product.Category?.Name" />
+                <DetailRow Label="Price" Value="@_product.Price.ToString("N2")" />
+                <DetailRow Label="Cost" Value="@_product.Cost.ToString("N2")" />
+                <DetailRow Label="Reorder level" Value="@_product.ReorderLevel.ToString()" />
+                <DetailRow Label="Status"><StatusBadge IsActive="_product.IsActive" /></DetailRow>
+                <DetailRow Label="Created" Value="@($"{_product.CreatedAtUtc:yyyy-MM-dd HH:mm} UTC by {_product.CreatedBy}")" />
+                @if (_product.ModifiedAtUtc is not null)
+                {
+                    <DetailRow Label="Modified" Value="@($"{_product.ModifiedAtUtc:yyyy-MM-dd HH:mm} UTC by {_product.ModifiedBy}")" />
+                }
+            </dl>
+        }
+    </ChildContent>
+    <Footer>
+        <Button Variant="ButtonVariant.Outline" OnClick="OnClose">Close</Button>
+    </Footer>
+</Dialog>
+
+@code {
+    [Parameter] public Guid ProductId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private ProductDto? _product;
+    private ApiError? _error;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Api.GetProductAsync(ProductId);
+        if (result.IsSuccess)
+        {
+            _product = result.Value;
+        }
+        else if (!await Session.HandleUnauthorizedAsync(result.Error))
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+}
