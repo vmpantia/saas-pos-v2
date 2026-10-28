@@ -1,0 +1,47 @@
+@implements IDisposable
+@inject ToastService Toasts
+
+<div class="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-full max-w-sm flex-col gap-2">
+    @foreach (var toast in _toasts)
+    {
+        <div @key="toast.Id" role="status" class="pointer-events-auto flex items-start gap-3 rounded-lg border bg-popover p-4 text-popover-foreground shadow-lg animate-fade-in">
+            <Icon Name="@(toast.Kind == ToastKind.Error ? "alert" : "check")"
+                  Class="@("mt-0.5 " + (toast.Kind == ToastKind.Error ? "text-destructive" : toast.Kind == ToastKind.Success ? "text-emerald-600" : "text-muted-foreground"))" />
+            <div class="grid flex-1 gap-1">
+                <p class="text-sm font-medium leading-none">@toast.Title</p>
+                @if (!string.IsNullOrEmpty(toast.Description))
+                {
+                    <p class="text-sm text-muted-foreground">@toast.Description</p>
+                }
+            </div>
+            <button type="button" class="cursor-pointer text-muted-foreground hover:text-foreground" aria-label="Dismiss" @onclick="() => Dismiss(toast.Id)"><Icon Name="x" /></button>
+        </div>
+    }
+</div>
+
+@code {
+    private const int DurationMs = 4000;
+
+    private readonly List<ToastMessage> _toasts = [];
+
+    protected override void OnInitialized() => Toasts.OnShow += OnShow;
+
+    private void OnShow(ToastMessage toast) => _ = InvokeAsync(async () =>
+    {
+        _toasts.Add(toast);
+        StateHasChanged();
+
+        await Task.Delay(DurationMs);
+        Dismiss(toast.Id);
+    });
+
+    private void Dismiss(Guid id)
+    {
+        if (_toasts.RemoveAll(t => t.Id == id) > 0)
+        {
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose() => Toasts.OnShow -= OnShow;
+}

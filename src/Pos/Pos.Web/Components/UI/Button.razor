@@ -17,7 +17,7 @@
     [Parameter] public EventCallback OnClick { get; set; }
 
     private string Classes => Cn(
-        "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all outline-none active:scale-[0.98] " +
+        "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none active:scale-[0.98] " +
         "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
         Variant switch
         {
@@ -26,14 +26,14 @@
             ButtonVariant.Secondary => "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
             ButtonVariant.Ghost => "hover:bg-accent hover:text-accent-foreground",
             ButtonVariant.Link => "text-primary underline-offset-4 hover:underline",
-            _ => "bg-primary text-primary-foreground shadow-sm shadow-primary/25 hover:bg-primary/90"
+            _ => "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90"
         },
         Size switch
         {
-            ButtonSize.Sm => "h-8 gap-1.5 rounded-md px-3",
-            ButtonSize.Lg => "h-10 rounded-md px-6",
+            ButtonSize.Sm => "h-8 gap-1.5 px-3",
+            ButtonSize.Lg => "h-10 px-6",
             ButtonSize.Icon => "size-9",
-            _ => "h-10 px-4 py-2"
+            _ => "h-9 px-4 py-2"
         },
         Class);
 }

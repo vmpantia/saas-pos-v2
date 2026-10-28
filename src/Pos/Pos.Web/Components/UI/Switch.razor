@@ -1,0 +1,15 @@
+@inherits UiComponent
+
+<button type="button" role="switch" aria-checked="@(Checked ? "true" : "false")" disabled="@Disabled" @onclick="Toggle"
+        class="@Cn("inline-flex h-[1.15rem] w-8 shrink-0 cursor-pointer items-center rounded-full border border-transparent shadow-xs outline-none transition-all focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50",
+                   Checked ? "bg-primary" : "bg-input", Class)" @attributes="AdditionalAttributes">
+    <span class="@Cn("pointer-events-none block size-4 rounded-full bg-background ring-0 transition-transform", Checked ? "translate-x-[calc(100%-2px)]" : "translate-x-0")"></span>
+</button>
+
+@code {
+    [Parameter] public bool Checked { get; set; }
+    [Parameter] public EventCallback<bool> CheckedChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    private Task Toggle() => CheckedChanged.InvokeAsync(!Checked);
+}

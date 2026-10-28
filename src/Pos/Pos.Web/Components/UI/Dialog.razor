@@ -2,8 +2,8 @@
 
 @* Render conditionally (@if) so the content's state resets each time it opens. *@
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 animate-in bg-black/40 backdrop-blur-sm" @onclick="Close"></div>
-    <div role="dialog" aria-modal="true" class="@Cn("relative z-10 flex max-h-[90vh] w-full flex-col rounded-xl border bg-card shadow-2xl", Size, Class)" @attributes="AdditionalAttributes">
+    <div class="absolute inset-0 bg-black/50" @onclick="Close"></div>
+    <div role="dialog" aria-modal="true" class="@Cn("relative z-10 flex max-h-[90vh] w-full flex-col rounded-lg border bg-background shadow-lg", Size, Class)" @attributes="AdditionalAttributes">
         <div class="flex items-start justify-between gap-4 border-b px-6 py-4">
             <div class="space-y-1">
                 <h2 class="text-lg font-semibold leading-none">@Title</h2>

@@ -1,0 +1,21 @@
+@inherits UiComponent
+
+<span class="@Cn("relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-sm font-medium", Class)" @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Src))
+    {
+        <img src="@Src" alt="@Fallback" class="aspect-square size-full" />
+    }
+    else
+    {
+        @Initial
+    }
+</span>
+
+@code {
+    [Parameter] public string? Src { get; set; }
+
+    /// <summary>Text the initial is taken from when there is no image.</summary>
+    [Parameter] public string? Fallback { get; set; }
+
+    private string Initial => string.IsNullOrWhiteSpace(Fallback) ? "?" : Fallback.Trim()[0].ToString().ToUpperInvariant();
+}

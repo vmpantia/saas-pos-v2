@@ -1,0 +1,29 @@
+@inherits UiComponent
+
+<div class="@Cn("relative inline-block text-left", Class)" @attributes="AdditionalAttributes">
+    <span @onclick="Toggle">@Trigger</span>
+    @if (_open)
+    {
+        <div class="fixed inset-0 z-40" @onclick="Close"></div>
+        <div role="menu" class="@Cn("absolute z-50 mt-1 min-w-40 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md", Align == MenuAlign.End ? "right-0" : "left-0")">
+            <CascadingValue Value="this" IsFixed="true">@ChildContent</CascadingValue>
+        </div>
+    }
+</div>
+
+@code {
+    public enum MenuAlign { Start, End }
+
+    [Parameter] public RenderFragment? Trigger { get; set; }
+    [Parameter] public MenuAlign Align { get; set; } = MenuAlign.End;
+
+    private bool _open;
+
+    private void Toggle() => _open = !_open;
+
+    public void Close()
+    {
+        _open = false;
+        StateHasChanged();
+    }
+}

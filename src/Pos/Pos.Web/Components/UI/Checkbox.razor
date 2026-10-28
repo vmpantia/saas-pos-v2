@@ -1,0 +1,13 @@
+@inherits UiComponent
+
+<input type="checkbox" checked="@Checked" disabled="@Disabled" @onchange="OnChanged"
+       class="@Cn("size-4 shrink-0 cursor-pointer rounded-[4px] border border-input accent-primary shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50", Class)"
+       @attributes="AdditionalAttributes" />
+
+@code {
+    [Parameter] public bool Checked { get; set; }
+    [Parameter] public EventCallback<bool> CheckedChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    private Task OnChanged(ChangeEventArgs e) => CheckedChanged.InvokeAsync(e.Value is true);
+}

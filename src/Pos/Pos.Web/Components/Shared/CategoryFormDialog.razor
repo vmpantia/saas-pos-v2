@@ -15,7 +15,7 @@
                 <Input id="cat-name" @bind-Value="_form.Name" Placeholder="e.g. Beverages" />
             </FormField>
             <FormField TValue="string?" Label="Description" For="cat-desc" ValidationFor="() => _form.Description">
-                <Input id="cat-desc" @bind-Value="_form.Description" Placeholder="Optional" />
+                <Textarea id="cat-desc" @bind-Value="_form.Description" Placeholder="Optional" />
             </FormField>
         </EditForm>
     </ChildContent>

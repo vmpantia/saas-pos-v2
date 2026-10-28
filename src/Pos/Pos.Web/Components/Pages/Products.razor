@@ -3,6 +3,7 @@
 @attribute [Authorize]
 @inject ApiClient Api
 @inject SessionService Session
+@inject ToastService Toasts
 
 <PageTitle>Products - POS</PageTitle>
 
@@ -10,7 +11,7 @@
     <PageHeader Title="Products" Description="@Subtitle">
         <Actions>
             <div class="w-full sm:w-72">
-                <SearchInput @bind-Value="_search" Placeholder="Search name, SKU or category" />
+                <SearchInput @bind-Value="Search" Placeholder="Search name, SKU or category" />
             </div>
             <Button Variant="ButtonVariant.Outline" Loading="_loading" OnClick="LoadAsync"><Icon Name="refresh" /> Refresh</Button>
             <Button OnClick="() => _creating = true"><Icon Name="plus" /> New product</Button>
@@ -24,6 +25,17 @@
             <StatCard Title="Active" Value="@_products.Count(p => p.IsActive).ToString()" IconName="check" />
             <StatCard Title="Uncategorized" Value="@_products.Count(p => p.Category is null).ToString()" IconName="alert" />
         </div>
+    }
+
+    @if (!_loading && _error is null)
+    {
+        <Tabs Value="@_status" ValueChanged="SetStatus">
+            <TabsList>
+                <TabsTrigger Value="all">All</TabsTrigger>
+                <TabsTrigger Value="active">Active</TabsTrigger>
+                <TabsTrigger Value="inactive">Inactive</TabsTrigger>
+            </TabsList>
+        </Tabs>
     }
 
     @if (_loading)
@@ -55,7 +67,7 @@
                 </TableRow>
             </TableHeader>
             <TableBody>
-                @foreach (var product in Filtered)
+                @foreach (var product in Paged)
                 {
                     <TableRow @key="product.Id">
                         <TableCell Class="font-mono text-xs text-muted-foreground">@product.Sku</TableCell>
@@ -66,16 +78,21 @@
                         <TableCell Align="TextAlign.Right" Class="tabular-nums text-muted-foreground">@product.ReorderLevel</TableCell>
                         <TableCell><StatusBadge IsActive="product.IsActive" /></TableCell>
                         <TableCell Align="TextAlign.Right">
-                            <div class="flex justify-end gap-1">
-                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="View" OnClick="() => _viewId = product.Id"><Icon Name="eye" /></Button>
-                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="Edit" OnClick="() => _editing = product"><Icon Name="pencil" /></Button>
-                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="@(product.IsActive ? "Deactivate" : "Activate")" OnClick="() => AskToggle(product)"><Icon Name="@(product.IsActive ? "ban" : "check")" /></Button>
-                            </div>
+                            <DropdownMenu>
+                                <Trigger><Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" aria-label="Actions"><Icon Name="more" /></Button></Trigger>
+                                <ChildContent>
+                                    <DropdownMenuItem OnClick="() => _viewId = product.Id"><Icon Name="eye" /> View</DropdownMenuItem>
+                                    <DropdownMenuItem OnClick="() => _editing = product"><Icon Name="pencil" /> Edit</DropdownMenuItem>
+                                    <Separator Class="my-1" />
+                                    <DropdownMenuItem Destructive="product.IsActive" OnClick="() => AskToggle(product)"><Icon Name="@(product.IsActive ? "ban" : "check")" /> @(product.IsActive ? "Deactivate" : "Activate")</DropdownMenuItem>
+                                </ChildContent>
+                            </DropdownMenu>
                         </TableCell>
                     </TableRow>
                 }
             </TableBody>
         </Table>
+        <Pagination Page="_page" PageChanged="SetPage" PageSize="PageSize" Total="Filtered.Count" />
     }
     @if (_creating)
     {
@@ -104,13 +121,44 @@
     private bool _loading = true;
     private string? _search = string.Empty;
 
-    private List<ProductDto> Filtered => string.IsNullOrWhiteSpace(_search)
+    private List<ProductDto> Matching => string.IsNullOrWhiteSpace(_search)
         ? _products
         : _products.Where(p =>
             p.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
             p.Sku.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
             (p.Category?.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
 
+    private const int PageSize = 10;
+
+    private string _status = "all";
+    private int _page = 1;
+
+    private string? Search
+    {
+        get => _search;
+        set
+        {
+            _search = value;
+            _page = 1;
+        }
+    }
+
+    private List<ProductDto> Filtered => _status switch
+    {
+        "active" => Matching.Where(x => x.IsActive).ToList(),
+        "inactive" => Matching.Where(x => !x.IsActive).ToList(),
+        _ => Matching
+    };
+
+    private IEnumerable<ProductDto> Paged => Filtered.Skip((_page - 1) * PageSize).Take(PageSize);
+
+    private void SetStatus(string status)
+    {
+        _status = status;
+        _page = 1;
+    }
+
+    private void SetPage(int page) => _page = page;
     private string Subtitle => _loading || _error is not null
         ? "Browse your product catalog."
         : $"{Filtered.Count} of {_products.Count} products";
@@ -132,6 +180,7 @@
             _error = result.Error;
         }
 
+        _page = Math.Min(_page, Math.Max(1, (int)Math.Ceiling(Filtered.Count / (double)PageSize)));
         _loading = false;
     }
 
@@ -151,8 +200,9 @@
         _toggleError = null;
     }
 
-    private Task OnSavedAsync(ProductDto _)
+    private Task OnSavedAsync(ProductDto saved)
     {
+        Toasts.Success(_editing is null ? "Product created" : "Product updated", saved.Name);
         CloseDialogs();
         return LoadAsync();
     }
@@ -173,6 +223,7 @@
 
         if (result.IsSuccess)
         {
+            Toasts.Success(result.Value!.IsActive ? "Product activated" : "Product deactivated", result.Value.Name);
             CloseDialogs();
             await LoadAsync();
         }

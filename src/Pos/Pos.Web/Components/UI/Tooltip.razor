@@ -1,0 +1,12 @@
+@inherits UiComponent
+
+@* CSS-only tooltip: shows on hover or keyboard focus of the wrapped content. *@
+<span class="@Cn("group/tooltip relative inline-flex", Class)" @attributes="AdditionalAttributes">
+    @ChildContent
+    <span role="tooltip"
+          class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 w-max -translate-x-1/2 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground opacity-0 transition-opacity group-hover/tooltip:opacity-100 group-focus-within/tooltip:opacity-100">@Text</span>
+</span>
+
+@code {
+    [Parameter] public string Text { get; set; } = string.Empty;
+}

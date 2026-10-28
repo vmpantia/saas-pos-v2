@@ -16,7 +16,7 @@ public enum TextAlign { Left, Center, Right }
 public static class FieldStyles
 {
     public const string Control =
-        "flex h-10 w-full min-w-0 rounded-lg border border-input bg-card/80 px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none " +
+        "flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none " +
         "placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 md:text-sm " +
         "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 " +
         "[&.invalid]:border-destructive [&.invalid]:ring-destructive/20";

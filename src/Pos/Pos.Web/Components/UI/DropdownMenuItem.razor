@@ -1,0 +1,20 @@
+@inherits UiComponent
+
+<button type="button" role="menuitem" disabled="@Disabled" @onclick="OnClickAsync"
+        class="@Cn("relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent disabled:pointer-events-none disabled:opacity-50",
+                   Destructive ? "text-destructive hover:bg-destructive/10 hover:text-destructive" : null, Class)"
+        @attributes="AdditionalAttributes">@ChildContent</button>
+
+@code {
+    [CascadingParameter] private DropdownMenu? Menu { get; set; }
+
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool Destructive { get; set; }
+
+    private async Task OnClickAsync()
+    {
+        Menu?.Close();
+        await OnClick.InvokeAsync();
+    }
+}

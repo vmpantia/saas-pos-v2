@@ -1,0 +1,12 @@
+@inherits UiComponent
+
+<div class="@Cn("flex flex-col gap-2", Class)" @attributes="AdditionalAttributes">
+    <CascadingValue Value="this" IsFixed="true">@ChildContent</CascadingValue>
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    public Task SelectAsync(string value) => ValueChanged.InvokeAsync(value);
+}

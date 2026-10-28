@@ -1,0 +1,7 @@
+@inherits UiComponent
+
+<div role="separator" class="@Cn("shrink-0 bg-border", Vertical ? "h-full w-px" : "h-px w-full", Class)" @attributes="AdditionalAttributes"></div>
+
+@code {
+    [Parameter] public bool Vertical { get; set; }
+}

@@ -1,0 +1,32 @@
+@inherits UiComponent
+
+<div class="@Cn("flex items-center justify-between gap-4 px-1 text-sm", Class)" @attributes="AdditionalAttributes">
+    <p class="text-muted-foreground">@Summary</p>
+    <div class="flex items-center gap-2">
+        <span class="text-muted-foreground">Page @Page of @TotalPages</span>
+        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="Page <= 1" OnClick="() => GoTo(Page - 1)">Previous</Button>
+        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="Page >= TotalPages" OnClick="() => GoTo(Page + 1)">Next</Button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Page { get; set; } = 1;
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+    [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public int Total { get; set; }
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(Total / (double)PageSize));
+
+    private string Summary
+    {
+        get
+        {
+            if (Total == 0) return "No results";
+            var from = (Page - 1) * PageSize + 1;
+            var to = Math.Min(Page * PageSize, Total);
+            return $"Showing {from}-{to} of {Total}";
+        }
+    }
+
+    private Task GoTo(int page) => PageChanged.InvokeAsync(Math.Clamp(page, 1, TotalPages));
+}

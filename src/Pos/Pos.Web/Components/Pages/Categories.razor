@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject ApiClient Api
 @inject SessionService Session
+@inject ToastService Toasts
 
 <PageTitle>Categories - POS</PageTitle>
 
@@ -9,7 +10,7 @@
     <PageHeader Title="Categories" Description="@Subtitle">
         <Actions>
             <div class="w-full sm:w-72">
-                <SearchInput @bind-Value="_search" Placeholder="Search name or description" />
+                <SearchInput @bind-Value="Search" Placeholder="Search name or description" />
             </div>
             <Button Variant="ButtonVariant.Outline" Loading="_loading" OnClick="LoadAsync"><Icon Name="refresh" /> Refresh</Button>
             <Button OnClick="() => _creating = true"><Icon Name="plus" /> New category</Button>
@@ -23,6 +24,17 @@
             <StatCard Title="Active" Value="@_categories.Count(c => c.IsActive).ToString()" IconName="check" />
             <StatCard Title="Inactive" Value="@_categories.Count(c => !c.IsActive).ToString()" IconName="alert" />
         </div>
+    }
+
+    @if (!_loading && _error is null)
+    {
+        <Tabs Value="@_status" ValueChanged="SetStatus">
+            <TabsList>
+                <TabsTrigger Value="all">All</TabsTrigger>
+                <TabsTrigger Value="active">Active</TabsTrigger>
+                <TabsTrigger Value="inactive">Inactive</TabsTrigger>
+            </TabsList>
+        </Tabs>
     }
 
     @if (_loading)
@@ -51,7 +63,7 @@
                 </TableRow>
             </TableHeader>
             <TableBody>
-                @foreach (var category in Filtered)
+                @foreach (var category in Paged)
                 {
                     <TableRow @key="category.Id">
                         <TableCell Class="font-medium">@category.Name</TableCell>
@@ -59,16 +71,21 @@
                         <TableCell><StatusBadge IsActive="category.IsActive" /></TableCell>
                         <TableCell Class="text-muted-foreground">@category.CreatedAtUtc.ToString("yyyy-MM-dd")</TableCell>
                         <TableCell Align="TextAlign.Right">
-                            <div class="flex justify-end gap-1">
-                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="View" OnClick="() => _viewId = category.Id"><Icon Name="eye" /></Button>
-                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="Edit" OnClick="() => _editing = category"><Icon Name="pencil" /></Button>
-                                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" title="@(category.IsActive ? "Deactivate" : "Activate")" OnClick="() => AskToggle(category)"><Icon Name="@(category.IsActive ? "ban" : "check")" /></Button>
-                            </div>
+                            <DropdownMenu>
+                                <Trigger><Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" aria-label="Actions"><Icon Name="more" /></Button></Trigger>
+                                <ChildContent>
+                                    <DropdownMenuItem OnClick="() => _viewId = category.Id"><Icon Name="eye" /> View</DropdownMenuItem>
+                                    <DropdownMenuItem OnClick="() => _editing = category"><Icon Name="pencil" /> Edit</DropdownMenuItem>
+                                    <Separator Class="my-1" />
+                                    <DropdownMenuItem Destructive="category.IsActive" OnClick="() => AskToggle(category)"><Icon Name="@(category.IsActive ? "ban" : "check")" /> @(category.IsActive ? "Deactivate" : "Activate")</DropdownMenuItem>
+                                </ChildContent>
+                            </DropdownMenu>
                         </TableCell>
                     </TableRow>
                 }
             </TableBody>
         </Table>
+        <Pagination Page="_page" PageChanged="SetPage" PageSize="PageSize" Total="Filtered.Count" />
     }
     @if (_creating)
     {
@@ -97,12 +114,43 @@
     private bool _loading = true;
     private string? _search = string.Empty;
 
-    private List<CategoryDto> Filtered => string.IsNullOrWhiteSpace(_search)
+    private List<CategoryDto> Matching => string.IsNullOrWhiteSpace(_search)
         ? _categories
         : _categories.Where(c =>
             c.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
             (c.Description?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
 
+    private const int PageSize = 10;
+
+    private string _status = "all";
+    private int _page = 1;
+
+    private string? Search
+    {
+        get => _search;
+        set
+        {
+            _search = value;
+            _page = 1;
+        }
+    }
+
+    private List<CategoryDto> Filtered => _status switch
+    {
+        "active" => Matching.Where(x => x.IsActive).ToList(),
+        "inactive" => Matching.Where(x => !x.IsActive).ToList(),
+        _ => Matching
+    };
+
+    private IEnumerable<CategoryDto> Paged => Filtered.Skip((_page - 1) * PageSize).Take(PageSize);
+
+    private void SetStatus(string status)
+    {
+        _status = status;
+        _page = 1;
+    }
+
+    private void SetPage(int page) => _page = page;
     private string Subtitle => _loading || _error is not null
         ? "Organize your products into categories."
         : $"{Filtered.Count} of {_categories.Count} categories";
@@ -124,6 +172,7 @@
             _error = result.Error;
         }
 
+        _page = Math.Min(_page, Math.Max(1, (int)Math.Ceiling(Filtered.Count / (double)PageSize)));
         _loading = false;
     }
 
@@ -143,8 +192,9 @@
         _toggleError = null;
     }
 
-    private Task OnSavedAsync(CategoryDto _)
+    private Task OnSavedAsync(CategoryDto saved)
     {
+        Toasts.Success(_editing is null ? "Category created" : "Category updated", saved.Name);
         CloseDialogs();
         return LoadAsync();
     }
@@ -165,6 +215,7 @@
 
         if (result.IsSuccess)
         {
+            Toasts.Success(result.Value!.IsActive ? "Category activated" : "Category deactivated", result.Value.Name);
             CloseDialogs();
             await LoadAsync();
         }

@@ -2,9 +2,9 @@
 @inject SessionService Session
 
 <div class="flex min-h-screen">
-    <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/70 text-sidebar-foreground backdrop-blur-xl md:flex">
+    <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
         <div class="flex items-center gap-3 px-6 py-6">
-            <div class="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/30">
+            <div class="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                 <Icon Name="bag" Class="size-5" />
             </div>
             <span class="text-lg font-semibold tracking-tight">POS</span>
@@ -20,7 +20,7 @@
     </aside>
 
     <div class="flex min-w-0 flex-1 flex-col">
-        <header class="sticky top-0 z-10 flex items-center justify-between border-b bg-card/70 px-4 py-3 backdrop-blur-xl sm:px-6">
+        <header class="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-4 py-3 sm:px-6">
             <nav class="flex gap-1 md:hidden">
                 <NavLink href="products" Match="NavLinkMatch.Prefix" class="@NavClass" ActiveClass="@ActiveClass"><Icon Name="package" /> Products</NavLink>
                 <NavLink href="categories" Match="NavLinkMatch.Prefix" class="@NavClass" ActiveClass="@ActiveClass"><Icon Name="tag" /> Categories</NavLink>
@@ -34,9 +34,7 @@
                             <p class="text-sm font-medium">@context.User.Identity?.Name</p>
                             <p class="text-xs text-muted-foreground">@context.User.FindFirst("email")?.Value</p>
                         </div>
-                        <div class="flex size-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                            @Initials(context.User.Identity?.Name)
-                        </div>
+                        <Avatar Fallback="@context.User.Identity?.Name" />
                         <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Sm" OnClick="Session.SignOutAsync">
                             <Icon Name="log-out" /> Sign out
                         </Button>
@@ -51,6 +49,8 @@
     </div>
 </div>
 
+<Toaster />
+
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
@@ -58,12 +58,5 @@
 </div>
 
 @code {
-    private const string NavClass = "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground";
-    private const string ActiveClass = "bg-sidebar-accent! text-sidebar-accent-foreground! shadow-xs";
-
-    private static string Initials(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return "?";
-        return name.Trim()[0].ToString().ToUpperInvariant();
-    }
-}
+    private const string NavClass = "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground";
+    private const string ActiveClass = "bg-sidebar-accent! text-sidebar-accent-foreground!";}

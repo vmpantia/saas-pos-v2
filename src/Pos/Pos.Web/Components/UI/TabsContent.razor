@@ -1,0 +1,12 @@
+@inherits UiComponent
+
+@if (Tabs?.Value == Value)
+{
+    <div role="tabpanel" class="@Cn("flex-1 outline-none", Class)" @attributes="AdditionalAttributes">@ChildContent</div>
+}
+
+@code {
+    [CascadingParameter] private Tabs? Tabs { get; set; }
+
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+}
