@@ -21,7 +21,7 @@ public sealed class ProductService(IProductRepository productRepository) : IProd
     public async Task<ProductDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var product = await productRepository.GetByIdAsync(id, cancellationToken);
-        if (product is null) throw new NotFoundException("Product with the specified ID was not found.");
+        if (product is null) throw new NotFoundException($"Product with the specified ID '{id}' was not found.");
 
         return product.Map();
     }
